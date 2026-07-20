@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APSIA — Dashboard de pilotage</title>
+<style>
+:root{
+  --bg:#07101a; --bg2:#0a1628; --card:#0f2035; --surface:#162840; --elev:#1a3050;
+  --accent:#3b82f6; --accent-d:#2563eb; --violet:#8b5cf6;
+  --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --info:#06b6d4;
+  --tx:#f8fafc; --tx2:#94a3b8; --tx3:#475569;
+  --bd:#1e3a5f; --bd2:#132030;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6;padding-bottom:60px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+
+header{background:rgba(7,16,26,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd2);padding:16px 0;position:sticky;top:0;z-index:100}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:1.3rem;letter-spacing:.04em}
+.logo span{color:var(--accent)}
+.logo small{display:block;font-size:.7rem;font-weight:500;color:var(--tx2);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.countdown{text-align:right}
+.cd-num{font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1}
+.cd-lbl{font-size:.72rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:24px 0}
+.kpi{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:14px 16px}
+.kpi .n{font-size:1.7rem;font-weight:800;line-height:1.1}
+.kpi .l{font-size:.75rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.bar{height:8px;background:var(--bd2);border-radius:99px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--violet));border-radius:99px;transition:width .4s}
+
+h2{font-size:1.15rem;font-weight:700;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
+h2 .tag{font-size:.7rem;font-weight:600;background:var(--surface);border:1px solid var(--bd);color:var(--tx2);padding:2px 9px;border-radius:99px;letter-spacing:.06em}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;align-items:center}
+.fbtn{background:var(--surface);border:1px solid var(--bd);color:var(--tx2);border-radius:99px;padding:6px 14px;font-size:.83rem;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s}
+.fbtn:hover{background:var(--elev);color:var(--tx)}
+.fbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.fsep{width:1px;height:22px;background:var(--bd);margin:0 4px}
+input.search{background:var(--surface);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:7px 12px;font-size:.85rem;font-family:inherit;min-width:200px;flex:1;max-width:280px}
+input.search::placeholder{color:var(--tx3)}
+
+.drive{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:14px 0 6px}
+.dcard{background:var(--card);border:1px solid var(--bd2);border-radius:10px;padding:13px 15px;text-decoration:none;color:var(--tx);display:block;transition:.15s}
+.dcard:hover{background:var(--surface);border-color:var(--bd)}
+.dcard .dt{font-weight:600;font-size:.92rem;margin-bottom:2px}
+.dcard .dd{font-size:.78rem;color:var(--tx2);line-height:1.45}
+.dmain{background:linear-gradient(92deg,rgba(59,130,246,.14),rgba(139,92,246,.10));border:1px solid rgba(59,130,246,.35)}
+
+.grp{margin-bottom:26px}
+.ghd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px;background:var(--card);border:1px solid var(--bd2);border-radius:10px 10px 0 0;cursor:pointer}
+.ghd:hover{background:var(--surface)}
+.gtitle{font-weight:700;font-size:.98rem;display:flex;align-items:center;gap:9px}
+.gdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gmeta{font-size:.78rem;color:var(--tx2);white-space:nowrap}
+.glist{border:1px solid var(--bd2);border-top:0;border-radius:0 0 10px 10px;overflow:hidden}
+
+.task{display:grid;grid-template-columns:118px 1fr 132px 96px;gap:12px;align-items:center;padding:11px 15px;border-bottom:1px solid var(--bd2);background:var(--bg2);transition:.15s}
+.task:last-child{border-bottom:0}
+.task:hover{background:var(--card)}
+.task.done .tt{text-decoration:line-through;color:var(--tx3)}
+.task.hide{display:none}
+
+.st{border:1px solid;border-radius:99px;padding:4px 10px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:inherit;width:100%;text-align:center;letter-spacing:.02em;transition:.15s}
+.st-todo{background:rgba(71,85,105,.18);border-color:var(--tx3);color:var(--tx2)}
+.st-wip{background:rgba(59,130,246,.16);border-color:var(--accent);color:#93c5fd}
+.st-done{background:rgba(34,197,94,.16);border-color:var(--ok);color:#86efac}
+.st-block{background:rgba(239,68,68,.16);border-color:var(--err);color:#fca5a5}
+
+.tt{font-size:.9rem;font-weight:500;line-height:1.45}
+.tsub{font-size:.76rem;color:var(--tx2);margin-top:2px}
+.prio{display:inline-block;font-size:.66rem;font-weight:700;padding:1px 7px;border-radius:4px;margin-right:7px;letter-spacing:.05em;vertical-align:1px}
+.p-crit{background:rgba(239,68,68,.2);color:#fca5a5}
+.p-haut{background:rgba(245,158,11,.2);color:#fcd34d}
+.p-norm{background:rgba(71,85,105,.25);color:var(--tx2)}
+
+.own{font-size:.79rem;font-weight:600;display:flex;align-items:center;gap:7px}
+.av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;flex-shrink:0}
+.av-md{background:rgba(59,130,246,.22);color:#93c5fd}
+.av-mk{background:rgba(139,92,246,.22);color:#c4b5fd}
+.av-mh{background:rgba(34,197,94,.22);color:#86efac}
+.av-all{background:rgba(245,158,11,.22);color:#fcd34d}
+
+.due{font-size:.78rem;color:var(--tx2);text-align:right;white-space:nowrap}
+.due.late{color:#fca5a5;font-weight:600}
+.due.soon{color:#fcd34d;font-weight:600}
+
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}
+.pcard{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:15px 17px}
+.pname{font-weight:700;font-size:.98rem;display:flex;align-items:center;gap:9px;margin-bottom:3px}
+.prole{font-size:.76rem;color:var(--tx2);margin-bottom:11px}
+.pstat{display:flex;gap:14px;font-size:.78rem;color:var(--tx2);margin-top:9px}
+.pstat b{color:var(--tx);font-weight:700}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 8px}
+.btn{background:var(--surface);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:9px 17px;font-size:.87rem;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.btn:hover{background:var(--elev)}
+.btn-p{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-p:hover{background:var(--accent-d)}
+.btn-d{border-color:rgba(239,68,68,.4);color:#fca5a5}
+.btn-d:hover{background:rgba(239,68,68,.12)}
+
+.note{background:rgba(245,158,11,.08);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:12px 16px;font-size:.85rem;color:var(--tx2);margin:16px 0}
+.note b{color:var(--tx)}
+
+dialog{background:var(--card);border:1px solid var(--bd);border-radius:12px;color:var(--tx);max-width:620px;width:92%;padding:22px}
+dialog::backdrop{background:rgba(0,0,0,.72)}
+textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:ui-monospace,monospace;font-size:.79rem;padding:12px;resize:vertical;line-height:1.6}
+
+footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;border-top:1px solid var(--bd2);margin-top:34px}
+
+@media(max-width:820px){
+  .task{grid-template-columns:1fr;gap:7px;padding:13px 15px}
+  .due{text-align:left}
+  .st{width:auto;display:inline-block;padding:4px 14px}
+}
+@media print{
+  body{background:#fff;color:#000}
+  .filters,.actions,header .countdown,.drive{display:none}
+  .task,.kpi,.pcard,.ghd{background:#fff!important;border-color:#ccc!important;color:#000!important}
+  .tt,.gtitle,.kpi .n{color:#000!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hdr">
+    <div class="logo">APS<span>IA</span><small>Dashboard de pilotage</small></div>
+    <div class="countdown">
+      <div class="cd-num" id="cd">—</div>
+      <div class="cd-lbl">jours avant le lancement · 5 oct. 2026</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="k-total">0</div><div class="l">Actions au total</div></div>
+    <div class="kpi"><div class="n" style="color:var(--ok)" id="k-done">0</div><div class="l">Terminées</div></div>
+    <div class="kpi"><div class="n" style="color:var(--accent)" id="k-wip">0</div><div class="l">En cours</div></div>
+    <div class="kpi"><div class="n" style="color:var(--err)" id="k-block">0</div><div class="l">Bloquées</div></div>
+    <div class="kpi">
+      <div class="n" id="k-pct">0 %</div><div class="l">Avancement global</div>
+      <div class="bar"><i id="k-bar" style="width:0%"></i></div>
+    </div>
+  </div>
+
+  <h2>Dossiers du projet <span class="tag">Google Drive</span></h2>
+  <div class="drive">
+    <a class="dcard dmain" href="https://drive.google.com/drive/folders/1SvbGXRriz9C59bz7BLllgeeNX3oZuWpz" target="_blank">
+      <div class="dt">APSIA — Projet</div><div class="dd">Dossier racine · tous les fichiers du projet</div></a>
+    <a class="dcard" href="https://drive.google.com/drive/folders/1MQryr8ex1RBxC7CZIDMzf2UlyS8WlhFy" target="_blank">
+      <div class="dt">01 — Produit et Technique</div><div class="dd">Specs, architecture, dossier interne, recette</div></a>
+    <a class="dcard" href="https://drive.google.com/drive/folders/1DsTtFtzH0n0DaAyjypc4vfa3zxwSYiNK" target="_blank">
+      <div class="dt">02 — Juridique et Administratif</div><div class="dd">Contrat tripartite, RCCM, NIF, NDA, OAPI, CGU</div></a>
+    <a class="dcard" href="https://drive.google.com/drive/folders/1ivQGVc0wF_uLiUUuapkTC1tCjkknleAs" target="_blank">
+      <div class="dt">03 — Commercial et Marketing</div><div class="dd">Pipeline écoles, argumentaires, contenus, pilotes</div></a>
+    <a class="dcard" href="https://drive.google.com/drive/folders/1VgDuqHrajKABJL9u_WKJwDTFQLb1Glnt" target="_blank">
+      <div class="dt">04 — Finances</div><div class="dd">Plan financier, compte de projet, relevés mensuels</div></a>
+    <a class="dcard" href="https://drive.google.com/drive/folders/1vg0q3qGoLNd7KUVM-qKEKGgvPdHkvVnk" target="_blank">
+      <div class="dt">05 — Design et Charte graphique</div><div class="dd">Logo, tokens, kit réseaux sociaux, visuels produit</div></a>
+    <a class="dcard" href="https://drive.google.com/drive/folders/1iNbxYy4JYwKV6nk0bTkP629-XIVdAJP8" target="_blank">
+      <div class="dt">06 — Pilotage et Dashboard</div><div class="dd">Ce dashboard, comptes rendus, rapports hebdo</div></a>
+  </div>
+
+  <h2>Charge par associé</h2>
+  <div class="people" id="people"></div>
+
+  <h2>Plan d'action <span class="tag">21 juillet → 5 octobre 2026</span></h2>
+
+  <div class="filters">
+    <button class="fbtn on" data-f="who" data-v="all">Tous</button>
+    <button class="fbtn" data-f="who" data-v="MD">M. Diawara</button>
+    <button class="fbtn" data-f="who" data-v="MK">M. C. Kanté</button>
+    <button class="fbtn" data-f="who" data-v="MH">M. Hady</button>
+    <span class="fsep"></span>
+    <button class="fbtn on" data-f="st" data-v="all">Tous statuts</button>
+    <button class="fbtn" data-f="st" data-v="todo">À faire</button>
+    <button class="fbtn" data-f="st" data-v="wip">En cours</button>
+    <button class="fbtn" data-f="st" data-v="block">Bloquées</button>
+    <span class="fsep"></span>
+    <input class="search" id="q" placeholder="Rechercher une action…">
+  </div>
+
+  <div id="groups"></div>
+
+  <div class="actions">
+    <button class="btn btn-p" onclick="report()">Générer le rapport hebdo</button>
+    <button class="btn" onclick="window.print()">Imprimer / PDF</button>
+    <button class="btn btn-d" onclick="reset()">Réinitialiser les statuts</button>
+  </div>
+
+  <div class="note">
+    <b>Comment l'équipe s'en sert.</b> Chaque associé ouvre ce fichier dans son navigateur et met à jour ses propres actions —
+    les statuts sont enregistrés localement sur son appareil. Chaque vendredi, chacun clique sur
+    « Générer le rapport hebdo » et colle le texte dans le groupe WhatsApp APSIA. Mohamed consolide et met à jour
+    la copie de référence déposée dans le dossier <i>06 — Pilotage et Dashboard</i>.
+  </div>
+
+  <footer>
+    APSIA © 2026 · Dashboard de pilotage interne · réservé aux trois Parties du contrat tripartite<br>
+    Lancement public cible : lundi 5 octobre 2026 · Conakry, Guinée
+  </footer>
+</div>
+
+<dialog id="dlg">
+  <h2 style="margin:0 0 12px">Rapport hebdomadaire</h2>
+  <p style="font-size:.85rem;color:var(--tx2);margin-bottom:12px">Copie ce texte et colle-le dans le groupe WhatsApp APSIA.</p>
+  <textarea id="rep" readonly></textarea>
+  <div class="actions" style="margin:14px 0 0">
+    <button class="btn btn-p" onclick="copyRep()">Copier</button>
+    <button class="btn" onclick="document.getElementById('dlg').close()">Fermer</button>
+  </div>
+</dialog>
+
+<script>
+const PEOPLE={
+  MD:{n:'Mohamed DIAWARA',r:'Porteur de Projet · 51 %',c:'av-md'},
+  MK:{n:'Mamadou Cellou KANTÉ',r:'Développeur · 29 %',c:'av-mk'},
+  MH:{n:'Mohamed HADY',r:'Apporteur d\u2019Affaires · 20 %',c:'av-mh'},
+  ALL:{n:'Les trois Parties',r:'Décision collégiale',c:'av-all'}
+};
+const GROUPS=[
+  {id:'SEC',t:'Sécurité — passif à purger',d:'#ef4444',s:'Avant toute autre chose'},
+  {id:'TEC',t:'Produit et technique',d:'#8b5cf6',s:'Finaliser le code'},
+  {id:'DES',t:'Design et charte graphique',d:'#06b6d4',s:'Identité visuelle'},
+  {id:'JUR',t:'Juridique et administratif',d:'#f59e0b',s:'RCCM, NIF, domaine, banque'},
+  {id:'PAY',t:'Paiement — Intouch',d:'#22c55e',s:'NDA puis intégration'},
+  {id:'COM',t:'Commercial et marketing',d:'#3b82f6',s:'B2C puis B2B écoles'}
+];
+const T=[
+ {id:'S1',g:'SEC',t:'Rotation des clés Groq et Kkiapay chez les fournisseurs',s:'Clés lisibles dans l\u2019historique du dépôt public — exploitables en quelques heures',w:'MK',d:'2026-07-21',p:'crit'},
+ {id:'S2',g:'SEC',t:'Passage du dépôt en privé, Porteur de Projet administrateur',s:'Clause escrow — Article 6 du contrat',w:'MK',d:'2026-07-21',p:'crit'},
+ {id:'S3',g:'SEC',t:'Push de feat/prod-hardening et ouverture de la PR',s:'6 commits non poussés — risque de perte',w:'MK',d:'2026-07-22',p:'crit'},
+ {id:'S4',g:'SEC',t:'Purge de l\u2019historique Git (git filter-repo ou BFG)',s:'Complément à la rotation, jamais un substitut',w:'MK',d:'2026-07-25',p:'haut'},
+ {id:'S5',g:'SEC',t:'Mise en place de la règle de push hebdomadaire',s:'Obligation contractuelle — Article 3.2',w:'MK',d:'2026-07-25',p:'norm'},
+
+ {id:'T1',g:'TEC',t:'Worker OCR asynchrone (arq) hors de l\u2019API',s:'Chantier bloquant : 4 gros PDF simultanés gèlent l\u2019API',w:'MK',d:'2026-08-08',p:'crit'},
+ {id:'T2',g:'TEC',t:'API versionnée /api/v1 et endpoint /config',s:'Obligatoire avant publication sur le Play Store',w:'MK',d:'2026-08-15',p:'crit'},
+ {id:'T3',g:'TEC',t:'Migration des uploads vers stockage objet S3',s:'Prérequis au passage multi-instances (phase 2)',w:'MK',d:'2026-08-22',p:'haut'},
+ {id:'T4',g:'TEC',t:'Streaming SSE des réponses IA',s:'15-40 s d\u2019attente actuelle — enjeu de rétention',w:'MK',d:'2026-08-29',p:'haut'},
+ {id:'T5',g:'TEC',t:'Audit des pages Quota, Abonnement et Admin',s:'Seules pages jamais passées en revue',w:'MK',d:'2026-09-05',p:'haut'},
+ {id:'T6',g:'TEC',t:'Réécriture de l\u2019Annexe A du contrat (nouvelle stack)',s:'L\u2019annexe décrit encore Supabase et l\u2019API Claude',w:'MD',d:'2026-07-31',p:'haut'},
+ {id:'T7',g:'TEC',t:'Recette complète et tests de charge',s:'3 navigateurs, Android bas de gamme, connexion dégradée',w:'ALL',d:'2026-09-19',p:'crit'},
+ {id:'T8',g:'TEC',t:'Mise en production publique de la PWA',s:'Verrou de la date de lancement — plus aucun report possible',w:'MK',d:'2026-09-28',p:'crit'},
+
+ {id:'D1',g:'DES',t:'Finaliser la charte graphique (tokens et composants)',s:'Migrer les valeurs dupliquées de index.css vers theme()',w:'MD',d:'2026-08-03',p:'haut'},
+ {id:'D2',g:'DES',t:'Logo APSIA — versions finales SVG, PNG, favicon, icônes app',s:'Requis pour le Play Store et les réseaux sociaux',w:'MD',d:'2026-08-08',p:'haut'},
+ {id:'D3',g:'DES',t:'Kit visuel réseaux sociaux (templates posts et stories)',s:'Format carré et vertical, déclinés par matière',w:'MD',d:'2026-08-15',p:'norm'},
+ {id:'D4',g:'DES',t:'Captures produit et vidéo de démonstration de 60 secondes',s:'Pièce maîtresse du démarchage écoles et du Play Store',w:'ALL',d:'2026-08-22',p:'haut'},
+ {id:'D5',g:'DES',t:'Fiche produit 2 pages pour le démarchage établissements',s:'Support papier remis en main propre au proviseur',w:'MD',d:'2026-08-22',p:'haut'},
+
+ {id:'J1',g:'JUR',t:'Réserver le nom de domaine apsia.app',s:'Promo 1ʳᵉ année en cours · l\u2019URL sera gravée dans les apps mobiles',w:'MD',d:'2026-07-21',p:'crit'},
+ {id:'J2',g:'JUR',t:'Dépôt du dossier RCCM',s:'Prérequis au compte bancaire et au contrat Intouch',w:'MD',d:'2026-07-25',p:'crit'},
+ {id:'J3',g:'JUR',t:'Déclaration écrite du conflit d\u2019intérêts CSIG',s:'Lettre au Coordinateur Général + muraille de Chine',w:'MD',d:'2026-07-31',p:'crit'},
+ {id:'J4',g:'JUR',t:'Obtention du NIF',s:'Suite logique du RCCM',w:'MD',d:'2026-08-08',p:'haut'},
+ {id:'J5',g:'JUR',t:'Ouverture du compte Ecobank et de la carte prépayée',s:'Compte de projet dédié alimenté 51/29/20 (Art. 3.1)',w:'MD',d:'2026-08-15',p:'crit'},
+ {id:'J6',g:'JUR',t:'Signature du contrat tripartite v4 (annexes à jour)',s:'Annexe A réécrite + Annexe B gouvernance',w:'ALL',d:'2026-08-22',p:'haut'},
+ {id:'J7',g:'JUR',t:'Rédaction de la politique de confidentialité et des CGU',s:'Obligatoire pour le Play Store et pour les mineurs',w:'MD',d:'2026-09-05',p:'crit'},
+ {id:'J8',g:'JUR',t:'Création du compte Google Play en organisation',s:'Évite le test fermé de 14 jours imposé aux comptes personnels',w:'MD',d:'2026-09-12',p:'haut'},
+ {id:'J9',g:'JUR',t:'Dépôt de la marque APSIA à l\u2019OAPI',s:'Protection sur 17 États — récépissé suffisant au lancement',w:'MD',d:'2026-09-30',p:'norm'},
+
+ {id:'P1',g:'PAY',t:'Envoi de l\u2019email de demande de partenariat à Intouch',s:'Point de départ de toute la chaîne paiement',w:'MD',d:'2026-07-22',p:'crit'},
+ {id:'P2',g:'PAY',t:'Relance téléphonique Intouch',s:'Ne jamais attendre plus de 5 jours une réponse email',w:'MH',d:'2026-07-29',p:'haut'},
+ {id:'P3',g:'PAY',t:'Signature du NDA Intouch',s:'Débloque la documentation technique',w:'MD',d:'2026-08-08',p:'crit'},
+ {id:'P4',g:'PAY',t:'Réception et transmission de la documentation API à Kanté',s:'Délai d\u2019intégration à estimer dès réception',w:'MD',d:'2026-08-15',p:'haut'},
+ {id:'P5',g:'PAY',t:'Négociation de la grille tarifaire (taux de commission)',s:'Conditionne les Revenus Nets contractuels (Art. 5.1)',w:'MD',d:'2026-08-22',p:'crit'},
+ {id:'P6',g:'PAY',t:'Signature du contrat commercial Intouch',s:'Sans contrat signé, aucun encaissement possible',w:'MD',d:'2026-09-05',p:'crit'},
+ {id:'P7',g:'PAY',t:'Intégration technique, tests sandbox puis passage en live',s:'Webhooks vérifiés par signature',w:'MK',d:'2026-09-19',p:'crit'},
+
+ {id:'C1',g:'COM',t:'Appels individuels aux testeurs bêta actuels',s:'Appel vocal, pas de message — 3 questions et demande de parrainage',w:'MH',d:'2026-07-27',p:'crit'},
+ {id:'C2',g:'COM',t:'Création du groupe WhatsApp « APSIA — BEPC/BAC 2027 »',s:'Quiz gratuit chaque lundi = démonstration permanente',w:'MH',d:'2026-07-27',p:'haut'},
+ {id:'C3',g:'COM',t:'Liste des 20 établissements cibles de Conakry',s:'Nom, quartier, effectif estimé, contact du proviseur',w:'MH',d:'2026-08-03',p:'haut'},
+ {id:'C4',g:'COM',t:'Script de démarchage et argumentaire proviseur',s:'Objectif de la prise de contact : 20 minutes en présentiel',w:'ALL',d:'2026-08-08',p:'haut'},
+ {id:'C5',g:'COM',t:'Ouverture des comptes Facebook, Instagram et TikTok',s:'Publication organique uniquement — zéro budget publicité',w:'MH',d:'2026-08-08',p:'norm'},
+ {id:'C6',g:'COM',t:'Prise de contact avec les 10 premiers proviseurs',s:'Objectif : 3 rendez-vous obtenus',w:'MH',d:'2026-08-22',p:'crit'},
+ {id:'C7',g:'COM',t:'3 démonstrations réalisées en présentiel',s:'Le proviseur doit toucher le produit, pas regarder des slides',w:'MH',d:'2026-09-05',p:'crit'},
+ {id:'C8',g:'COM',t:'2 pilotes école lancés (20 élèves gratuits pendant 30 jours)',s:'Transforme le proviseur en premier témoin interne',w:'MH',d:'2026-09-19',p:'crit'},
+ {id:'C9',g:'COM',t:'Programme de parrainage configuré dans le produit',s:'Un mois offert par filleul payant',w:'MK',d:'2026-09-19',p:'haut'},
+ {id:'C10',g:'COM',t:'Campagne de pré-inscription — objectif 300 inscrits',s:'WhatsApp, ambassadeurs, professeurs prescripteurs',w:'MH',d:'2026-09-26',p:'crit'},
+ {id:'C11',g:'COM',t:'Lancement public',s:'Jour de la rentrée scolaire — cible J+7 : 200 inscrits, 20 payants',w:'ALL',d:'2026-10-05',p:'crit'},
+ {id:'C12',g:'COM',t:'Signature du premier contrat école',s:'50 élèves à 15 000 GNF ≈ 750 000 GNF bruts par mois',w:'MH',d:'2026-10-31',p:'crit'}
+];
+
+const K='apsia_dash_v1';
+let S=JSON.parse(localStorage.getItem(K)||'{}');
+let F={who:'all',st:'all',q:''};
+const CY=['todo','wip','done','block'];
+const LBL={todo:'À faire',wip:'En cours',done:'Fait',block:'Bloqué'};
+
+function save(){localStorage.setItem(K,JSON.stringify(S))}
+function st(id){return S[id]||'todo'}
+function fmt(d){const[y,m,j]=d.split('-');return j+'/'+m}
+function dueCls(d,s){
+  if(s==='done')return '';
+  const t=new Date(d),n=new Date();n.setHours(0,0,0,0);
+  const j=Math.round((t-n)/864e5);
+  return j<0?'late':j<=7?'soon':'';
+}
+
+function render(){
+  const g=document.getElementById('groups');g.innerHTML='';
+  GROUPS.forEach(G=>{
+    const ts=T.filter(t=>t.g===G.id);
+    const done=ts.filter(t=>st(t.id)==='done').length;
+    const vis=ts.filter(t=>{
+      if(F.who!=='all'&&t.w!==F.who&&t.w!=='ALL')return false;
+      if(F.st!=='all'&&st(t.id)!==F.st)return false;
+      if(F.q&&!(t.t+' '+t.s).toLowerCase().includes(F.q))return false;
+      return true;
+    });
+    if(!vis.length)return;
+    const d=document.createElement('div');d.className='grp';
+    d.innerHTML='<div class="ghd"><div class="gtitle"><span class="gdot" style="background:'+G.d+'"></span>'+G.t+'</div>'+
+      '<div class="gmeta">'+done+' / '+ts.length+' · '+G.s+'</div></div>'+
+      '<div class="glist">'+vis.map(t=>{
+        const s=st(t.id),P=PEOPLE[t.w];
+        return '<div class="task '+(s==='done'?'done':'')+'">'+
+          '<button class="st st-'+s+'" onclick="cyc(\''+t.id+'\')">'+LBL[s]+'</button>'+
+          '<div><div class="tt"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span>'+t.t+'</div>'+
+          '<div class="tsub">'+t.s+'</div></div>'+
+          '<div class="own"><span class="av '+P.c+'">'+(t.w==='ALL'?'★':t.w)+'</span>'+P.n.split(' ').slice(-1)[0]+'</div>'+
+          '<div class="due '+dueCls(t.d,s)+'">'+fmt(t.d)+'</div></div>';
+      }).join('')+'</div>';
+    g.appendChild(d);
+  });
+  stats();
+}
+
+function stats(){
+  const n=T.length,dn=T.filter(t=>st(t.id)==='done').length,
+        wp=T.filter(t=>st(t.id)==='wip').length,bl=T.filter(t=>st(t.id)==='block').length,
+        p=Math.round(dn/n*100);
+  document.getElementById('k-total').textContent=n;
+  document.getElementById('k-done').textContent=dn;
+  document.getElementById('k-wip').textContent=wp;
+  document.getElementById('k-block').textContent=bl;
+  document.getElementById('k-pct').textContent=p+' %';
+  document.getElementById('k-bar').style.width=p+'%';
+
+  document.getElementById('people').innerHTML=['MD','MK','MH'].map(k=>{
+    const P=PEOPLE[k],ts=T.filter(t=>t.w===k||t.w==='ALL');
+    const d=ts.filter(t=>st(t.id)==='done').length,
+          w=ts.filter(t=>st(t.id)==='wip').length,
+          b=ts.filter(t=>st(t.id)==='block').length,
+          pc=ts.length?Math.round(d/ts.length*100):0;
+    return '<div class="pcard"><div class="pname"><span class="av '+P.c+'">'+k+'</span>'+P.n+'</div>'+
+      '<div class="prole">'+P.r+'</div>'+
+      '<div class="bar"><i style="width:'+pc+'%"></i></div>'+
+      '<div class="pstat"><span><b>'+d+'</b>/'+ts.length+' faites</span><span><b>'+w+'</b> en cours</span>'+
+      (b?'<span style="color:#fca5a5"><b>'+b+'</b> bloquée'+(b>1?'s':'')+'</span>':'')+'</div></div>';
+  }).join('');
+}
+
+function cyc(id){
+  S[id]=CY[(CY.indexOf(st(id))+1)%4];save();render();
+}
+function reset(){
+  if(confirm('Remettre toutes les actions à « À faire » ?')){S={};save();render()}
+}
+function report(){
+  const dt=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const cd=Math.ceil((new Date('2026-10-05')-new Date())/864e5);
+  let r='📊 APSIA — RAPPORT HEBDO\n'+dt+' · J-'+cd+' avant le lancement\n\n';
+  const dn=T.filter(t=>st(t.id)==='done').length;
+  r+='Avancement global : '+Math.round(dn/T.length*100)+' % ('+dn+'/'+T.length+' actions)\n\n';
+  const bl=T.filter(t=>st(t.id)==='block');
+  if(bl.length){r+='🔴 BLOQUÉ — à traiter en réunion\n'+bl.map(t=>'• '+t.t+' ('+PEOPLE[t.w].n.split(' ').slice(-1)[0]+')').join('\n')+'\n\n'}
+  const wp=T.filter(t=>st(t.id)==='wip');
+  if(wp.length){r+='🔵 EN COURS\n'+wp.map(t=>'• '+t.t+' ('+PEOPLE[t.w].n.split(' ').slice(-1)[0]+' · '+fmt(t.d)+')').join('\n')+'\n\n'}
+  const lt=T.filter(t=>st(t.id)!=='done'&&new Date(t.d)<new Date());
+  if(lt.length){r+='⏰ EN RETARD\n'+lt.map(t=>'• '+t.t+' — échéance '+fmt(t.d)+' ('+PEOPLE[t.w].n.split(' ').slice(-1)[0]+')').join('\n')+'\n\n'}
+  const nx=T.filter(t=>{const j=(new Date(t.d)-new Date())/864e5;return st(t.id)!=='done'&&j>=0&&j<=7});
+  if(nx.length){r+='📅 CETTE SEMAINE\n'+nx.map(t=>'• '+t.t+' ('+PEOPLE[t.w].n.split(' ').slice(-1)[0]+' · '+fmt(t.d)+')').join('\n')+'\n\n'}
+  r+='Détail complet : dossier Drive « 06 — Pilotage et Dashboard »';
+  document.getElementById('rep').value=r;
+  document.getElementById('dlg').showModal();
+}
+function copyRep(){
+  const t=document.getElementById('rep');t.select();
+  navigator.clipboard.writeText(t.value).then(()=>alert('Rapport copié.')).catch(()=>{document.execCommand('copy');alert('Rapport copié.')});
+}
+
+document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
+  const f=b.dataset.f;
+  document.querySelectorAll('.fbtn[data-f="'+f+'"]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');F[f]=b.dataset.v;render();
+});
+document.getElementById('q').oninput=e=>{F.q=e.target.value.toLowerCase();render()};
+
+document.getElementById('cd').textContent='J-'+Math.ceil((new Date('2026-10-05')-new Date())/864e5);
+render();
+</script>
+</body>
+</html>
